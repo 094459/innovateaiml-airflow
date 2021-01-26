@@ -16,7 +16,7 @@ During this presentation I talked about a few resources to help you get started 
 ---
 ### Amazon Managed Workflows for Apache Airflow resources
 
-* [Installing Amazon Managed Workflows for Apache Airflow via Cloudformation templates](https://dev.to/aws/automating-the-installation-of-managed-workflows-for-apache-airflow-5h8a)
+* [Installing Amazon Managed Workflows for Apache Airflow via Cloudformation templates](https://aws-oss.beachgeek.co.uk/3h)
 * Setting up permissions for developers
 * Setting up permissions for your workers
 * A simple development workflow for managing your Apache Airflow DAGs
