@@ -16,10 +16,10 @@ During this presentation I talked about a few resources to help you get started 
 ---
 ### Amazon Managed Workflows for Apache Airflow resources
 
-Installing Amazon Managed Workflows for Apache Airflow via Cloudformation templates
-Setting up permissions for developers
-Setting up permissions for your workers
-A simple development workflow for managing your Apache Airflow DAGs
+* [Installing Amazon Managed Workflows for Apache Airflow via Cloudformation templates](https://dev.to/aws/automating-the-installation-of-managed-workflows-for-apache-airflow-5h8a)
+* Setting up permissions for developers
+* Setting up permissions for your workers
+* A simple development workflow for managing your Apache Airflow DAGs
 
 **Integration with Amazon Elastic Map Reduce for big data workloads**
 
@@ -34,49 +34,3 @@ A simple development workflow for managing your Apache Airflow DAGs
 **Integration with Amazon Personalize**
 
 * [Managed Workflows for Apache Workflow and Amazon Personalise](https://aws-oss.beachgeek.co.uk/2e) - Great blog post and source code from AWS Community Builder, Yi Ai.
-
-**CloudFormation templates**
-
-You will find a number of scripts to help you automate your installation and configuration. You can find them in this folder [cf](cf)
-
-You need to setup and deploy the networking first before deploying the Managed Workflows for Apache Airflow. You can combine these if you want but will need to change the template to incorporate how you incorporate the parameters.
-
-You can run the templates via the AWS Cloudformation gui and then enter the parameters as needed. Observations on usage:
-
-* for the S3 bucket, make sure it is prefixed "airflow-"
-* when selecting the subnets, make sure you are using the private subnets not the public ones
-* ensure the region you are deploying currently has Managed Workflows for Apache Airflow
-
-You can modify the template with your own defaults. These are starter templates that can be improved -for example, asking for more user definable setting such as Worker instance sizes or logging information.
-
-There are two scripts provided to show you how these settings look: a public facing and a private instance.
-
-**AWS CLI and Parameter files**
-
-To run the deployment via the command  line, use the following parameter file changing the values based on the outputs of the networking script.
-
-```
-[
-    {
-      "ParameterKey": "s3BucketName",
-      "ParameterValue": "airflow-xxxx"
-    }, 
-    {
-      "ParameterKey": "subnetIds",
-      "ParameterValue": "{privatesubnet1-id},{privatesubnet2-id}"
-    },
-    {
-        "ParameterKey": "vpcId",
-        "ParameterValue": "{vpc-id}"
-      }
-  ]
-```
-
-You can then use the following commands to submit to AWS Cloudformation and then monitor via cli/console.
-
-```
-aws cloudformation create-stack --stack-name {your-unique-stack-name} --template-body file://mwaa-vpc-cfn.yaml
-```
-```
-aws cloudformation create-stack --stack-name {your-unique-stack-name} --template-body file://install-mwaa-public.yaml --parameters file://mwaa-cfn-parameters.json --capabilities CAPABILITY_IAM --region={region}
-```
