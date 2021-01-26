@@ -1,0 +1,14 @@
+[
+    {
+      "ParameterKey": "s3BucketName",
+      "ParameterValue": "airflow-xxxx"
+    }, 
+    {
+      "ParameterKey": "subnetIds",
+      "ParameterValue": "{privatesubnet1-id},{privatesubnet2-id}"
+    },
+    {
+        "ParameterKey": "vpcId",
+        "ParameterValue": "{vpc-id}"
+      }
+  ]
