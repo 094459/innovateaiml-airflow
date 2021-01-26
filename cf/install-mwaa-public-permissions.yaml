@@ -1,0 +1,185 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  s3BucketName:
+    Type: String
+    Description: The S3 bucket where your source code is stored.
+    AllowedPattern: "airflow-[a-z-]+"
+  
+  vpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: The VPC ID
+
+  subnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Provide a JSON list of 2 subnet IDs by name. These must be private subnets, in the same VPC, in two different availability zones.
+
+Resources:
+
+  EnvironmentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref s3BucketName
+      VersioningConfiguration:
+        Status: Enabled
+
+  MwaaEnvironment:
+    Type: AWS::MWAA::Environment
+    Properties:
+      AirflowVersion: 1.10.12
+      Name: !Sub "${AWS::StackName}-MwaaEnvironment"
+      SourceBucketArn: !GetAtt EnvironmentBucket.Arn
+      ExecutionRoleArn: !GetAtt MwaaExecutionRole.Arn
+      DagS3Path: dags
+      LoggingConfiguration:
+        DagProcessingLogs:
+          Enabled: True
+          LogLevel: INFO
+        SchedulerLogs:
+          Enabled: True
+          LogLevel: INFO
+        TaskLogs:
+          Enabled: True
+          LogLevel: INFO
+        WebserverLogs:
+          Enabled: True
+          LogLevel: INFO
+        WorkerLogs:
+          Enabled: True
+          LogLevel: INFO
+      EnvironmentClass: mw1.small
+      MaxWorkers: 5
+      NetworkConfiguration:
+        SecurityGroupIds:
+          - !GetAtt SecurityGroup.GroupId
+        SubnetIds: !Ref subnetIds
+      WebserverAccessMode: PUBLIC_ONLY
+  
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref vpcId
+      GroupDescription: !Sub "Security Group for Amazon MWAA Environment ${AWS::StackName}-MwaaEnvironment"
+      GroupName: !Sub "airflow-security-group-${AWS::StackName}-MwaaEnvironment"
+  
+  SecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref SecurityGroup
+      IpProtocol: "-1"
+      SourceSecurityGroupId: !Ref SecurityGroup
+
+  SecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref SecurityGroup
+      IpProtocol: "-1"
+      CidrIp: "0.0.0.0/0"
+
+  MwaaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - airflow-env.amazonaws.com
+                - airflow.amazonaws.com
+            Action:
+             - "sts:AssumeRole"
+      Path: "/service-role/"
+
+  MwaaDeveloperAccess:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: MWAA-Developer-Access
+      Policies:
+      - PolicyName: MWAA-Developer-Access-Policy-cfn
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action:
+            - airflow:CreateWebLoginToken
+            Resource:
+            - !Sub "arn:aws:airflow:${AWS::Region}:${AWS::AccountId}:role/*/User"
+
+  MwaaAdminAccess:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: MWAA-Administrator-Access
+      Policies:
+      - PolicyName: MWAA-Administrator-Access-Policy-cfn
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action:
+            - airflow:CreateWebLoginToken
+            Resource:
+            - !Sub "arn:aws:airflow:${AWS::Region}:${AWS::AccountId}:role/*/Admin"
+
+  MwaaExecutionPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Roles:
+        - !Ref MwaaExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: airflow:PublishMetrics
+            Resource:
+              # - !GetAtt MwaaEnvironment.Arn
+              - !Sub "arn:aws:airflow:${AWS::Region}:${AWS::AccountId}:environment/${AWS::StackName}-MwaaEnvironment"
+          - Effect: Deny
+            Action: s3:ListAllMyBuckets
+            Resource:
+              - !GetAtt EnvironmentBucket.Arn
+              - !Sub "${EnvironmentBucket.Arn}/*"
+          - Effect: Allow
+            Action:
+              - "s3:GetObject*"
+              - "s3:GetBucket*"
+              - "s3:List*"
+            Resource:
+              - !GetAtt EnvironmentBucket.Arn
+              - !Sub "${EnvironmentBucket.Arn}/*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:CreateLogGroup
+              - logs:PutLogEvents
+              - logs:GetLogEvents
+              - logs:GetLogRecord
+              - logs:GetLogGroupFields
+              - logs:GetQueryResults
+              - logs:DescribeLogGroups
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AWS::StackName}-MwaaEnvironment-*"
+          - Effect: Allow
+            Action: cloudwatch:PutMetricData
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:ReceiveMessage
+              - sqs:SendMessage
+            Resource:
+              - "arn:aws:sqs:us-east-1:*:airflow-celery-*"
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+              - kms:DescribeKey
+              - "kms:GenerateDataKey*"
+              - kms:Encrypt
+            NotResource: !Sub "arn:aws:kms:*:${AWS::AccountId}:key/*"
+            Condition:
+              StringLike:
+                "kms:ViaService":
+                  - !Sub "sqs.${AWS::Region}.amazonaws.com"
