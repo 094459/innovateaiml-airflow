@@ -1,0 +1,26 @@
+[
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": "{your keypair name}"
+    }, 
+    {
+      "ParameterKey": "PublicSubnet1ID",
+      "ParameterValue": "{your pub subnet 1}"
+    },
+    {
+      "ParameterKey": "PublicSubnet2ID",
+      "ParameterValue": "{your pub subnet 2}"
+    },
+    {
+        "ParameterKey": "VPCID",
+        "ParameterValue": "{your vpc}"
+    },
+    {
+      "ParameterKey": "RemoteAccessCIDR",
+      "ParameterValue": "{your CIDR}"
+    },
+    {
+      "ParameterKey":"EnableTCPForwarding",
+      "ParameterValue": "true"
+    }
+  ]
