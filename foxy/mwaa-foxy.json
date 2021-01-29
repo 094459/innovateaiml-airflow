@@ -1,0 +1,51 @@
+{
+    "e0b7kh1606694837384": {
+      "type": 3,
+      "color": "#66cc66",
+      "title": "MWAA-Private",
+      "active": true,
+      "address": "localhost",
+      "port": 8157,
+      "proxyDNS": false,
+      "username": "",
+      "password": "",
+      "whitePatterns": [
+        {
+          "title": "private-airflow-ui",
+          "pattern": "{replace with your private vpce url}",
+          "type": 1,
+          "protocols": 1,
+          "active": true
+        }
+      ],
+      "blackPatterns": [],
+      "pacURL": "",
+      "index": -1
+    },
+    "k20d21508277536715": {
+      "active": true,
+      "title": "Default",
+      "notes": "These are the settings that are used when no patterns match a URL.",
+      "color": "#0055E5",
+      "type": 5,
+      "whitePatterns": [
+        {
+          "title": "all URLs",
+          "active": true,
+          "pattern": "*",
+          "type": 1,
+          "protocols": 1
+        }
+      ],
+      "blackPatterns": [],
+      "index": 9007199254740991
+    },
+    "logging": {
+      "active": true,
+      "maxSize": 500
+    },
+    "mode": "patterns",
+    "browserVersion": "82.0.3",
+    "foxyProxyVersion": "7.5.1",
+    "foxyProxyEdition": "standard"
+  }
