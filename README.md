@@ -19,7 +19,7 @@ During this presentation I talked about a few resources to help you get started 
 * [Installing Amazon Managed Workflows for Apache Airflow via Cloudformation templates](https://aws-oss.beachgeek.co.uk/3h)
 * [Working with permissions](https://aws-oss.beachgeek.co.uk/3n)
 * [Accessing Amazon Managed Workflows for Apache Airflow](https://aws-oss.beachgeek.co.uk/3o)
-* A simple development workflow for managing your Apache Airflow DAGs
+* [A simple development workflow for managing your Apache Airflow DAGs](https://aws-oss.beachgeek.co.uk/4t)
 
 **Integration with Amazon Elastic Map Reduce for big data workloads**
 
