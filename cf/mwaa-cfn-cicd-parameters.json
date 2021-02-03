@@ -1,0 +1,18 @@
+[
+    {
+      "ParameterKey": "s3BucketName",
+      "ParameterValue": "airflow-blogpostdemo-stock"
+    }, 
+    {
+      "ParameterKey": "CodeCommitRepoName",
+      "ParameterValue": "airflow-stock-repo-demo"
+    },
+    {
+      "ParameterKey": "CodePipelineName",
+      "ParameterValue": "airflow-stock-pipe-demo"
+    },
+    {
+      "ParameterKey": "CodeBuildProjectName",
+      "ParameterValue": "airflow-stock-buildprj-demo"
+      }
+]

@@ -1,0 +1,314 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  s3BucketName:
+    Type: String
+    Description: The S3 bucket where your DAGs are stored.
+    AllowedPattern: "airflow-[a-z-]+"
+  
+  CodeCommitRepoName:
+    Type: String
+
+  CodePipelineName:
+    Type: String
+  
+  CodeBuildProjectName:
+    Type: String
+
+Resources:
+
+    ArtifactStoreBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        VersioningConfiguration:
+          Status: Enabled
+
+    CodeCommitRepository:
+        Type: AWS::CodeCommit::Repository
+        Properties:
+            RepositoryName: !Ref 'CodeCommitRepoName'
+            RepositoryDescription: "Used for DAG development"
+            Code: 
+              BranchName: main
+              S3:
+                Bucket: !Ref s3BucketName
+                Key: dags.zip
+
+    CodePipelinePipeline:
+        Type: AWS::CodePipeline::Pipeline
+        Properties:
+            Name: !Ref 'CodePipelineName'
+            RoleArn: !GetAtt PipelineRole.Arn
+            ArtifactStore: 
+                Location: !Ref 'ArtifactStoreBucket'
+                Type: "S3"
+            Stages: 
+              - Name: Source
+                Actions: 
+                  - Name: Source
+                    ActionTypeId: 
+                        Category: "Source"
+                        Owner: "AWS"
+                        Provider: "CodeCommit"
+                        Version: "1"
+                    Configuration: 
+                        BranchName: "main"
+                        OutputArtifactFormat: "CODE_ZIP"
+                        PollForSourceChanges: "false"
+                        RepositoryName: !Ref CodeCommitRepoName
+                    Region: !Ref AWS::Region
+                    OutputArtifacts:
+                      - Name: SourceArtifact
+                    Namespace: "SourceVariables"
+                    RunOrder: 1 
+              - Name: Deploy
+                Actions: 
+                  - Name: Build
+                    ActionTypeId: 
+                        Category: "Build"
+                        Owner: "AWS"
+                        Provider: "CodeBuild"
+                        Version: "1"
+                    Configuration: 
+                        ProjectName: !Ref 'CodeBuildProjectName'
+                    Region: !Ref AWS::Region
+                    InputArtifacts:
+                      - Name: SourceArtifact
+                    OutputArtifacts:
+                      - Name: BuildArtifact
+                    Namespace: "BuildVariables"
+                    RunOrder: 1
+
+    CodeBuildProject:
+        Type: AWS::CodeBuild::Project
+        Properties:
+            Name: !Ref 'CodeBuildProjectName'
+            Source:
+              Type: "CODEPIPELINE"
+              BuildSpec: !Sub |
+                version: 0.2
+                phases:
+                  build:
+                    commands:
+                      - aws s3 sync . s3://${s3BucketName}/dags/ 
+            Artifacts: 
+                EncryptionDisabled: false
+                Name: !Ref 'CodeBuildProjectName'
+                Packaging: "NONE"
+                Type: "CODEPIPELINE"
+            Cache: 
+                Type: "NO_CACHE"
+            Environment: 
+                ComputeType: "BUILD_GENERAL1_SMALL"
+                Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+                ImagePullCredentialsType: "CODEBUILD"
+                PrivilegedMode: false
+                Type: "LINUX_CONTAINER"
+            ServiceRole: !Ref CodeBuildRole
+            TimeoutInMinutes: 60
+            QueuedTimeoutInMinutes: 480
+            EncryptionKey: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/s3"
+            BadgeEnabled: false
+            LogsConfig: 
+                CloudWatchLogs: 
+                    Status: "ENABLED"
+                S3Logs: 
+                    Status: "DISABLED"
+                    EncryptionDisabled: false
+    
+    PipelineRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - codepipeline.amazonaws.com
+                  - cloudformation.amazonaws.com
+              Action: 'sts:AssumeRole'
+        Policies:
+          - PolicyName: Pipeline-Policy
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Effect: Allow
+                  Action: 
+                  - iam:PassRole
+                  Resource: "*"
+                - Effect: Allow
+                  Action: 
+                  - codecommit:CancelUploadArchive
+                  - codecommit:GetBranch
+                  - codecommit:GetCommit
+                  - codecommit:GetRepository
+                  - codecommit:GetUploadArchiveStatus
+                  - codecommit:UploadArchive
+                  Resource: "*"
+                - Effect: Allow
+                  Action: 
+                  - codedeploy:CreateDeployment
+                  - codedeploy:GetApplication
+                  - codedeploy:GetApplicationRevision
+                  - codedeploy:GetDeployment
+                  - codedeploy:GetDeploymentConfig
+                  - codedeploy:RegisterApplicationRevision
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                  - codestar-connections:UseConnection
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                  - elasticbeanstalk:*
+                  - ec2:*
+                  - elasticloadbalancing:*
+                  - autoscaling:*
+                  - cloudwatch:*
+                  - s3:*
+                  - sns:*
+                  - cloudformation:*
+                  - rds:*
+                  - sqs:*
+                  - ecs:*
+                  Resource: "*"
+                - Effect: Allow
+                  Action: 
+                  - lambda:InvokeFunction
+                  - lambda:ListFunctions            
+                  Resource: "*"
+                - Effect: Allow
+                  Action: 
+                  - opsworks:CreateDeployment
+                  - opsworks:DescribeApps
+                  - opsworks:DescribeCommands
+                  - opsworks:DescribeDeployments
+                  - opsworks:DescribeInstances
+                  - opsworks:DescribeStacks
+                  - opsworks:UpdateApp
+                  - opsworks:UpdateStack         
+                  Resource: "*"
+                - Effect: Allow
+                  Action: 
+                  - cloudformation:CreateStack
+                  - cloudformation:DeleteStack
+                  - cloudformation:DescribeStacks
+                  - cloudformation:UpdateStack
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:DeleteChangeSet
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:SetStackPolicy
+                  - cloudformation:ValidateTemplate               
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuildBatches
+                  - codebuild:StartBuildBatch
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                  - devicefarm:ListProjects
+                  - devicefarm:ListDevicePools
+                  - devicefarm:GetRun
+                  - devicefarm:GetUpload
+                  - devicefarm:CreateUpload
+                  - devicefarm:ScheduleRun
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                  - servicecatalog:ListProvisioningArtifacts
+                  - servicecatalog:CreateProvisioningArtifact
+                  - servicecatalog:DescribeProvisioningArtifact
+                  - servicecatalog:DeleteProvisioningArtifact
+                  - servicecatalog:UpdateProduct
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                  - cloudformation:ValidateTemplate
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                  - ecr:DescribeImages
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                  - states:DescribeExecution
+                  - states:DescribeStateMachine
+                  - states:StartExecution
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                  - appconfig:StartDeployment
+                  - appconfig:StopDeployment
+                  - appconfig:GetDeployment
+                  Resource: "*"
+
+    CodeBuildRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - codebuild.amazonaws.com
+              Action: 'sts:AssumeRole'
+        Policies:
+          - PolicyName: !Sub "${AWS::StackName}-CodeBuild-Policy"
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Effect: Allow
+                  Action: 
+                  - codebuild:CreateReportGroup
+                  - codebuild:CreateReport
+                  - codebuild:UpdateReport
+                  - codebuild:BatchPutTestCases
+                  - codebuild:BatchPutCodeCoverages
+                  Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/${CodeBuildProjectName}*"
+                - Effect: Allow
+                  Action: 
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketAcl
+                  - s3:GetBucketLocation
+                  - s3:List*
+                  Resource:
+                  - !Sub "arn:aws:s3:::${ArtifactStoreBucket}*"
+                  - !Sub "arn:aws:s3:::${s3BucketName}"
+                  - !Sub "arn:aws:s3:::${s3BucketName}/*"
+                - Effect: Allow
+                  Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${CodeBuildProjectName}"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${CodeBuildProjectName}:*"
+
+    CodePielineEventExeRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - events.amazonaws.com
+              Action: 'sts:AssumeRole'
+        Policies:
+          - PolicyName: !Sub "${AWS::StackName}-PipelineExecution-Policy"
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Effect: Allow
+                  Action: 'ccodepipeline:StartPipelineExecution'
+                  Resource: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipelineName}"
+
