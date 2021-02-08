@@ -1,0 +1,1 @@
+DagProcessingLogs={Enabled=true,LogLevel="INFO"},SchedulerLogs={Enabled=True,LogLevel="INFO"},TaskLogs={Enabled=false,LogLevel="DEBUG"},WebserverLogs={Enabled=true,LogLevel="CRITICAL"},WorkerLogs={Enabled=false,LogLevel="INFO"}
