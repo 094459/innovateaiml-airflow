@@ -22,7 +22,12 @@ Resources:
       BucketName: !Ref s3BucketName
       VersioningConfiguration:
         Status: Enabled
-
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+        
   MwaaEnvironment:
     Type: AWS::MWAA::Environment
     Properties:
@@ -34,6 +39,7 @@ Resources:
         SecurityGroupIds:
           - !GetAtt SecurityGroup.GroupId
         SubnetIds: !Ref subnetIds
+    DependsOn: MwaaExecutionPolicy
   
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -108,7 +114,7 @@ Resources:
               - logs:GetQueryResults
               - logs:DescribeLogGroups
             Resource:
-              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AWS::StackName}-MwaaEnvironment-*"
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:airflow-${AWS::StackName}-MwaaEnvironment-*"
           - Effect: Allow
             Action: cloudwatch:PutMetricData
             Resource: "*"
@@ -121,7 +127,7 @@ Resources:
               - sqs:ReceiveMessage
               - sqs:SendMessage
             Resource:
-              - "arn:aws:sqs:us-east-1:*:airflow-celery-*"
+              - !Sub "arn:aws:sqs:${AWS::Region}:*:airflow-celery-*"
           - Effect: Allow
             Action:
               - kms:Decrypt
