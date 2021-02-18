@@ -18,10 +18,16 @@ Resources:
 
   EnvironmentBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
     Properties:
       BucketName: !Ref s3BucketName
       VersioningConfiguration:
         Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
 
   MwaaEnvironment:
     Type: AWS::MWAA::Environment
@@ -54,7 +60,8 @@ Resources:
           - !GetAtt SecurityGroup.GroupId
         SubnetIds: !Ref subnetIds
       WebserverAccessMode: PUBLIC_ONLY
-  
+    DependsOn: MwaaExecutionPolicy
+
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -94,7 +101,7 @@ Resources:
   MwaaDeveloperAccess:
     Type: AWS::IAM::Group
     Properties:
-      GroupName: MWAA-Developer-Access
+      GroupName: !Sub "${AWS::StackName}-MWAA-Developer-Access"
       Policies:
       - PolicyName: MWAA-Developer-Access-Policy-cfn
         PolicyDocument:
@@ -109,7 +116,7 @@ Resources:
   MwaaAdminAccess:
     Type: AWS::IAM::Group
     Properties:
-      GroupName: MWAA-Administrator-Access
+      GroupName: !Sub "${AWS::StackName}-MWAA-Administrator-Access"
       Policies:
       - PolicyName: MWAA-Administrator-Access-Policy-cfn
         PolicyDocument:
@@ -141,9 +148,9 @@ Resources:
               - !Sub "${EnvironmentBucket.Arn}/*"
           - Effect: Allow
             Action:
-              - "s3:GetObject*"
-              - "s3:GetBucket*"
-              - "s3:List*"
+              - s3:GetObject*
+              - s3:GetBucket*
+              - s3:List*
             Resource:
               - !GetAtt EnvironmentBucket.Arn
               - !Sub "${EnvironmentBucket.Arn}/*"
@@ -156,11 +163,14 @@ Resources:
               - logs:GetLogRecord
               - logs:GetLogGroupFields
               - logs:GetQueryResults
-              - logs:DescribeLogGroups
             Resource:
-              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AWS::StackName}-MwaaEnvironment-*"
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AWS::StackName}-MwaaEnvironment*"
           - Effect: Allow
             Action: cloudwatch:PutMetricData
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - logs:DescribeLogGroups
             Resource: "*"
           - Effect: Allow
             Action:
@@ -171,12 +181,12 @@ Resources:
               - sqs:ReceiveMessage
               - sqs:SendMessage
             Resource:
-              - "arn:aws:sqs:us-east-1:*:airflow-celery-*"
+              - !Sub "arn:aws:sqs:${AWS::Region}:*:airflow-celery-*"
           - Effect: Allow
             Action:
               - kms:Decrypt
               - kms:DescribeKey
-              - "kms:GenerateDataKey*"
+              - kms:GenerateDataKey*
               - kms:Encrypt
             NotResource: !Sub "arn:aws:kms:*:${AWS::AccountId}:key/*"
             Condition:

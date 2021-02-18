@@ -141,7 +141,7 @@ Resources:
               - sqs:ReceiveMessage
               - sqs:SendMessage
             Resource:
-              - "arn:aws:sqs:us-east-1:*:airflow-celery-*"
+              - !Sub "arn:aws:sqs:${AWS::Region}:*:airflow-celery-*"
           - Effect: Allow
             Action:
               - kms:Decrypt
