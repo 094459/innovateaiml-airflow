@@ -22,6 +22,11 @@ Resources:
       BucketName: !Ref s3BucketName
       VersioningConfiguration:
         Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
 
   MwaaEnvironment:
     Type: AWS::MWAA::Environment
@@ -54,7 +59,8 @@ Resources:
           - !GetAtt SecurityGroup.GroupId
         SubnetIds: !Ref subnetIds
       WebserverAccessMode: PUBLIC_ONLY
-  
+    DependsOn: MwaaExecutionPolicy
+
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -128,7 +134,7 @@ Resources:
               - logs:GetQueryResults
               - logs:DescribeLogGroups
             Resource:
-              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AWS::StackName}-MwaaEnvironment-*"
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:airflow-${AWS::StackName}-MwaaEnvironment-*"
           - Effect: Allow
             Action: cloudwatch:PutMetricData
             Resource: "*"
