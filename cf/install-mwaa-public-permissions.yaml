@@ -164,7 +164,7 @@ Resources:
               - logs:GetLogGroupFields
               - logs:GetQueryResults
             Resource:
-              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AWS::StackName}-MwaaEnvironment*"
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:airflow-${AWS::StackName}-MwaaEnvironment*"
           - Effect: Allow
             Action: cloudwatch:PutMetricData
             Resource: "*"
