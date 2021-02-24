@@ -8,18 +8,17 @@
 
 During this presentation I talked about a few resources to help you get started and configure your Apache Airflow environments. Here are links to these resources.
 
-* [Airflow workshop from Delivery Hero](https://github.com/deliveryhero/pyconde2019-airflow-ml-workshop)- Check out this great starting workshop that was put together by Delivery Hero at PyConde 2019.
-* [Running Apache Airflow locally via Docker](https://aws-oss.beachgeek.co.uk/3g) - this is the Docker compose file I showed and started. It mounts a local volume (dags) that you can use to upload DAGs for development.
-* [Apache Airflow main page](https://airflow.apache.org/)
-* [Machine Learning in Production using Apache Airflow](https://aws-oss.beachgeek.co.uk/2g)
+#### Resources I showed during the presentation
 
----
-### Amazon Managed Workflows for Apache Airflow resources
+During the session I walked through using Amazon Managed Workflows for Apache Airflow. To reproduce the entire thing, you can follow these deep dives. Each post provides all the resources you need to reproduce what I demoed.
 
-* [Installing Amazon Managed Workflows for Apache Airflow via Cloudformation templates](https://aws-oss.beachgeek.co.uk/3h)
-* [Working with permissions](https://aws-oss.beachgeek.co.uk/3n)
-* [Accessing Amazon Managed Workflows for Apache Airflow](https://aws-oss.beachgeek.co.uk/3o)
-* [A simple development workflow for managing your Apache Airflow DAGs](https://aws-oss.beachgeek.co.uk/4t)
+* **Part 1** - [Installation and configuration of Managed Workflows for Apache Airflow](https://aws-oss.beachgeek.co.uk/3h)
+* **Part 2** - [Working with Permissions](https://aws-oss.beachgeek.co.uk/3n)
+* **Part 3** - [Accessing Amazon Managed Workflows for Apache Airflow](https://aws-oss.beachgeek.co.uk/3o)
+* **Part 4** - [Interacting with Amazon Managed Workflows for Apache Airflow via the command line](https://aws-oss.beachgeek.co.uk/4s)
+* **Part 5** - [A simple CI/CD system for your development workflow](https://aws-oss.beachgeek.co.uk/4t)
+* **Part 6** - [Monitoring and logging](https://aws-oss.beachgeek.co.uk/5r)
+
 
 **Integration with Amazon Elastic Map Reduce for big data workloads**
 
@@ -34,3 +33,16 @@ During this presentation I talked about a few resources to help you get started 
 **Integration with Amazon Personalize**
 
 * [Managed Workflows for Apache Workflow and Amazon Personalise](https://aws-oss.beachgeek.co.uk/2e) - Great blog post and source code from AWS Community Builder, Yi Ai.
+
+### 3rd Party resources and workshops
+
+There are some great 3rd party resources that I found whilst learning/researching how customers are using Apache Airflow. Here are some of my favourite resources that I found to work and do exactly what they said. Well worth checking out.
+
+
+* [Airflow workshop from Delivery Hero](https://github.com/deliveryhero/pyconde2019-airflow-ml-workshop)- Check out this great starting workshop that was put together by Delivery Hero at PyConde 2019.
+* [Running Apache Airflow locally via Docker](https://aws-oss.beachgeek.co.uk/3g) - this is the Docker compose file I showed and started. It mounts a local volume (dags) that you can use to upload DAGs for development.
+* [Apache Airflow main page](https://airflow.apache.org/)
+* [Machine Learning in Production using Apache Airflow](https://aws-oss.beachgeek.co.uk/2g)
+
+---
+
