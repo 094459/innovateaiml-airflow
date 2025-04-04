@@ -143,9 +143,7 @@ Resources:
               - !Sub "arn:aws:airflow:${AWS::Region}:${AWS::AccountId}:environment/${AWS::StackName}-MwaaEnvironment"
           - Effect: Deny
             Action: s3:ListAllMyBuckets
-            Resource:
-              - !GetAtt EnvironmentBucket.Arn
-              - !Sub "${EnvironmentBucket.Arn}/*"
+            Resource: "*"
           - Effect: Allow
             Action:
               - s3:GetObject*
